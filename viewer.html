@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TextClip — 내 라이브러리</title>
+  <link rel="stylesheet" href="viewer.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="brand-logo">📰</span>
+      <div>
+        <h1>TextClip</h1>
+        <div class="brand-sub"><span id="totalCount">0</span>개 클립</div>
+      </div>
+    </div>
+    <div class="topbar-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchBox" placeholder="제목 · 본문 · 키워드 검색" />
+    </div>
+    <div class="topbar-actions">
+      <button id="btnExport" class="ghost" title="JSON으로 내보내기">📤 내보내기</button>
+      <button id="btnImport" class="ghost" title="JSON 가져오기">📥 가져오기</button>
+      <input type="file" id="fileInput" accept="application/json" hidden />
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <section class="filter-section">
+        <div class="filter-header">
+          <h2 class="filter-title">폴더</h2>
+          <button id="btnNewFolder" class="new-folder-btn" title="새 폴더">+</button>
+        </div>
+        <ul id="folderList" class="folder-list"></ul>
+      </section>
+
+      <section class="filter-section">
+        <h2 class="filter-title">정렬</h2>
+        <select id="sortSelect" class="sort-select">
+          <option value="savedAt-desc">최근 저장순</option>
+          <option value="savedAt-asc">오래된 저장순</option>
+          <option value="date-desc">기사 날짜 (최신)</option>
+          <option value="date-asc">기사 날짜 (오래된)</option>
+          <option value="title-asc">제목 (가-하)</option>
+        </select>
+      </section>
+
+      <section class="filter-section">
+        <h2 class="filter-title">키워드 TOP 20</h2>
+        <div id="keywordCloud" class="keyword-cloud"></div>
+      </section>
+
+      <section class="filter-section danger-section">
+        <button id="btnClearAll" class="danger-btn" title="모든 클립 삭제">전체 삭제</button>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div id="activeFilters" class="active-filters"></div>
+      <div id="cardList" class="card-list"></div>
+      <div id="emptyState" class="empty-state" hidden>
+        <div class="empty-icon">📭</div>
+        <h3>아직 클립이 없습니다</h3>
+        <p>웹페이지에서 텍스트를 드래그하고<br />
+          우클릭 → <em>"TextClip에 저장"</em>을 눌러보세요.</p>
+        <p class="disclaimer">저장한 콘텐츠는 본인 PC에만 보관되며, 사용 책임은 본인에게 있습니다.<br />
+          저작권이 있는 콘텐츠는 개인적 용도로만 활용해주세요.</p>
+      </div>
+      <div id="noResults" class="empty-state" hidden>
+        <div class="empty-icon">🔍</div>
+        <h3>일치하는 클립이 없습니다</h3>
+        <p>검색어나 필터를 바꿔보세요.</p>
+      </div>
+    </main>
+  </div>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="card-meta">
+        <span class="card-date"></span>
+        <a class="card-source" target="_blank" rel="noopener">
+          <span class="source-dot"></span>
+          <span class="source-domain"></span>
+        </a>
+        <details class="card-folder-menu">
+          <summary class="card-folder-summary">
+            <span class="folder-dot"></span>
+            <span class="folder-label"></span>
+          </summary>
+          <div class="folder-menu-pop"></div>
+        </details>
+        <button class="card-delete" title="삭제">🗑</button>
+      </div>
+      <h3 class="card-title"></h3>
+      <p class="card-summary"></p>
+      <div class="card-keywords"></div>
+      <button class="card-expand">본문 펼치기 ▾</button>
+      <div class="card-body" hidden></div>
+    </article>
+  </template>
+
+  <script src="db.js"></script>
+  <script src="viewer.js"></script>
+</body>
+</html>

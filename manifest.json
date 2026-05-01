@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "TextClip",
+  "version": "1.0.0",
+  "description": "원하는 글을 드래그 한 번에 모으는 클리핑 도구. 어디서든 텍스트를 골라 저장하고 폴더로 정리하세요.",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "unlimitedStorage",
+    "notifications"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TextClip"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline';"
+  }
+}
