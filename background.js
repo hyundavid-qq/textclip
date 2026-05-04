@@ -25,6 +25,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       date,
       body,
       summary: analyzed.summary,
+      summarySource: "",
       keywords: analyzed.keywords,
       url: tab.url || "",
       savedAt: new Date().toISOString(),

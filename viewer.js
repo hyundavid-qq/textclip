@@ -41,6 +41,9 @@ async function init() {
   $("#fileInput").addEventListener("change", importClips);
   $("#btnClearAll").addEventListener("click", confirmClearAll);
   $("#btnNewFolder").addEventListener("click", handleNewFolder);
+  $("#btnSettings").addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("settings.html") });
+  });
 
   // AI 결과 입력 모달 이벤트
   document.querySelector('#aiResultModal .modal-close').addEventListener('click', closeAIResultModal);
@@ -59,6 +62,7 @@ async function init() {
       return;
     }
     fresh.summary = summary;
+    fresh.summarySource = "ai";
     await updateClip(fresh);
     closeAIResultModal();
     await refresh();
@@ -68,6 +72,10 @@ async function init() {
     if (e.key === 'Escape' && !document.getElementById('aiResultModal').hidden) {
       closeAIResultModal();
     }
+  });
+  document.getElementById('linkEditPrompts').addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.tabs.create({ url: chrome.runtime.getURL("settings.html") });
   });
 
   // 카드의 폴더 이동 메뉴(<details>) 외부 클릭 시 닫기
@@ -388,8 +396,12 @@ function makeCard(clip) {
   }
 
   const sum = card.querySelector(".card-summary");
-  if (clip.summary) sum.textContent = clip.summary;
-  else sum.remove();
+  if (clip.summary) {
+    sum.textContent = clip.summary;
+    if (clip.summarySource === "ai") sum.classList.add("is-ai");
+  } else {
+    sum.remove();
+  }
 
   const kwBox = card.querySelector(".card-keywords");
   for (const kw of (clip.keywords || [])) {

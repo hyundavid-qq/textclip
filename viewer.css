@@ -522,6 +522,24 @@ button.ghost:hover {
 
 .card-summary:empty { display: none; }
 
+.card-summary.is-ai {
+  background: #f8f5ff;
+  border-left: 3px solid #6b46c1;
+  padding: 10px 14px;
+  border-radius: 0 6px 6px 0;
+  position: relative;
+}
+.card-summary.is-ai::before {
+  content: "✨ AI 요약";
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b46c1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
 .card-quote {
   margin: 0 0 12px;
   padding: 8px 14px;
@@ -809,6 +827,22 @@ button.ghost:hover {
   font-family: inherit;
 }
 .btn-secondary:hover { background: #f3f0e9; color: #333; }
+
+.modal-footer-link {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+}
+.modal-footer-link a {
+  color: var(--text-subtle);
+  text-decoration: none;
+}
+.modal-footer-link a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
 
 /* ===== 토스트 ===== */
 .toast-container {
