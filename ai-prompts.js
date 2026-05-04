@@ -74,28 +74,58 @@ const _SEED_PROMPTS = [
   },
 ];
 
+// 동시 호출 시 시드가 두 번 일어나지 않도록 in-flight 프로미스를 공유
+let _inflightLoad = null;
+
 async function _loadPromptStore() {
-  const r = await chrome.storage.local.get(_PROMPT_KEY);
-  const data = r[_PROMPT_KEY];
+  if (_inflightLoad) return _inflightLoad;
+  _inflightLoad = (async () => {
+    try {
+      const r = await chrome.storage.local.get(_PROMPT_KEY);
+      let data = r[_PROMPT_KEY];
 
-  // 키 자체가 없거나(첫 실행) 손상된 경우만 시드
-  // 빈 배열은 사용자가 모두 삭제한 상태로 간주 → 시드하지 않음
-  if (!data || !Array.isArray(data.prompts)) {
-    const seed = { prompts: _SEED_PROMPTS.map(p => ({ ...p })) };
-    await chrome.storage.local.set({ [_PROMPT_KEY]: seed });
-    return seed;
-  }
+      // 키 없거나 손상된 경우 빈 store로 시작
+      if (!data || !Array.isArray(data.prompts)) {
+        data = { prompts: [] };
+      }
 
-  // 마이그레이션: isFavorite 필드 없으면 false로 보정
-  let migrated = false;
-  for (const p of data.prompts) {
-    if (typeof p.isFavorite !== "boolean") {
-      p.isFavorite = false;
-      migrated = true;
+      let modified = false;
+
+      // 마이그레이션: isFavorite 필드 없으면 false로 보정
+      for (const p of data.prompts) {
+        if (typeof p.isFavorite !== "boolean") {
+          p.isFavorite = false;
+          modified = true;
+        }
+      }
+
+      // 시드 정책: preset:* ID가 하나도 없으면 10개 프리셋을 append (idempotent)
+      // - 기본 프롬프트(id="default") 등 사용자 데이터는 안 건드림
+      // - 기존에 활성 프롬프트가 있으면 그대로 유지, 없을 때만 preset:investor 활성
+      const hasPreset = data.prompts.some(p =>
+        typeof p.id === "string" && p.id.startsWith("preset:")
+      );
+      if (!hasPreset) {
+        const presets = _SEED_PROMPTS.filter(p =>
+          typeof p.id === "string" && p.id.startsWith("preset:")
+        );
+        const hasActive = data.prompts.some(p => p.isActive);
+        const presetCopies = presets.map(p => ({
+          ...p,
+          isActive: !hasActive && p.id === "preset:investor",
+        }));
+        data.prompts.push(...presetCopies);
+        modified = true;
+        console.log(`[TextClip] 프리셋 ${presets.length}개를 시드했습니다`);
+      }
+
+      if (modified) await _savePromptStore(data);
+      return data;
+    } finally {
+      _inflightLoad = null;
     }
-  }
-  if (migrated) await _savePromptStore(data);
-  return data;
+  })();
+  return _inflightLoad;
 }
 
 async function _savePromptStore(data) {
