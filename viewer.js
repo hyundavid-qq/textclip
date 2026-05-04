@@ -18,7 +18,7 @@ const state = {
   folders: [],
   filtered: [],
   search: "",
-  folderId: null,   // null = 받은편지함, number = 특정 폴더
+  folderId: null,   // null = 저장한 클립, number = 특정 폴더
   keyword: null,
   sort: "savedAt-desc",
 };
@@ -106,10 +106,10 @@ function renderSidebar() {
   const list = $("#folderList");
   list.innerHTML = "";
 
-  // 받은편지함 — 항상 맨 위, 액션 없음
+  // 저장한 클립 — 항상 맨 위, 액션 없음
   list.appendChild(makeFolderItem({
     id: null,
-    name: "받은편지함",
+    name: "저장한 클립",
     color: null,
     count: inboxCount,
     isInbox: true,
@@ -259,7 +259,7 @@ async function handleRenameFolder(id, oldName) {
 }
 
 async function handleDeleteFolder(id, name) {
-  if (!confirm(`"${name}" 폴더를 삭제할까요?\n\n폴더 안의 클립은 받은편지함으로 이동됩니다.`)) return;
+  if (!confirm(`"${name}" 폴더를 삭제할까요?\n\n폴더 안의 클립은 저장한 클립으로 이동됩니다.`)) return;
   await deleteFolder(id);
   if (state.folderId === id) state.folderId = null;
   await refresh();
@@ -448,13 +448,13 @@ function populateFolderMenu(menuEl, clip) {
     label.textContent = truncate(currentFolder.name, 14);
   } else {
     dot.style.display = "none";
-    label.textContent = "📥 받은편지함";
+    label.textContent = "📥 저장한 클립";
   }
 
   const pop = menuEl.querySelector(".folder-menu-pop");
   pop.innerHTML = "";
 
-  pop.appendChild(makeFolderMenuItem(null, "📥 받은편지함", null, !clip.folderId, async () => {
+  pop.appendChild(makeFolderMenuItem(null, "📥 저장한 클립", null, !clip.folderId, async () => {
     menuEl.open = false;
     if (clip.folderId) {
       await moveClipToFolder(clip.id, null);

@@ -120,7 +120,7 @@ async function getCount() {
   });
 }
 
-// 클립을 폴더로 이동. folderId === null이면 받은편지함(폴더 미지정)
+// 클립을 폴더로 이동. folderId === null이면 저장한 클립(폴더 미지정)
 async function moveClipToFolder(clipId, folderId) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -170,7 +170,7 @@ async function updateFolder(folder) {
   });
 }
 
-// 폴더 삭제 + 해당 폴더의 클립을 받은편지함(folderId=null)으로 옮김. 한 트랜잭션으로 atomic 처리
+// 폴더 삭제 + 해당 폴더의 클립을 저장한 클립(folderId=null)으로 옮김. 한 트랜잭션으로 atomic 처리
 async function deleteFolder(id) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
