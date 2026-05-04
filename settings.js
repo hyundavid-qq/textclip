@@ -15,34 +15,52 @@ async function init() {
 
 async function renderList() {
   const prompts = await getAllPrompts();
+
+  // 정렬: 즐겨찾기 → 활성 → 원래(시드/추가) 순서
+  // Array.prototype.sort는 안정 정렬이라 동등 항목은 원래 순서 유지
+  const sorted = [...prompts].sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+    return 0;
+  });
+
   const list = $("#promptList");
   list.innerHTML = "";
-  for (const p of prompts) {
-    list.appendChild(makePromptCard(p));
+  for (const p of sorted) {
+    list.appendChild(makePromptItem(p));
   }
 }
 
-function makePromptCard(prompt) {
-  const t = $("#promptCardTemplate").content.cloneNode(true);
-  const card = t.querySelector(".prompt-card");
-  if (prompt.isActive) card.classList.add("active");
+function makePromptItem(prompt) {
+  const t = $("#promptItemTemplate").content.cloneNode(true);
+  const item = t.querySelector(".prompt-item");
+  item.dataset.id = prompt.id;
+  if (prompt.isActive) item.classList.add("is-active");
 
-  const radio = card.querySelector("input[type='radio']");
+  const radio = item.querySelector(".prompt-radio");
   radio.checked = !!prompt.isActive;
-  radio.dataset.id = prompt.id;
   radio.addEventListener("change", async () => {
     await setActivePrompt(prompt.id);
     await renderList();
-    showToast(`✅ "${prompt.name}"이(가) 활성화되었습니다`);
+    showToast(`✅ "${prompt.name}" 활성화됨`);
   });
 
-  card.querySelector(".prompt-name").textContent = prompt.name;
-  card.querySelector(".prompt-preview").textContent = prompt.content;
+  const favBtn = item.querySelector(".favorite-btn");
+  favBtn.textContent = prompt.isFavorite ? "★" : "☆";
+  if (prompt.isFavorite) favBtn.classList.add("is-favorite");
+  favBtn.title = prompt.isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가";
+  favBtn.addEventListener("click", async () => {
+    await toggleFavorite(prompt.id);
+    await renderList();
+  });
 
-  card.querySelector(".btn-edit-prompt").addEventListener("click", () => openFormForEdit(prompt));
-  card.querySelector(".btn-delete-prompt").addEventListener("click", () => handleDelete(prompt));
+  item.querySelector(".prompt-name").textContent = prompt.name;
+  item.querySelector(".prompt-content-preview").textContent = prompt.content;
 
-  return card;
+  item.querySelector(".prompt-edit").addEventListener("click", () => openFormForEdit(prompt));
+  item.querySelector(".prompt-delete").addEventListener("click", () => handleDelete(prompt));
+
+  return item;
 }
 
 function openFormForNew() {
@@ -101,17 +119,21 @@ async function handleSave() {
 }
 
 async function handleDelete(prompt) {
+  // 활성 프롬프트는 삭제 불가
   if (prompt.isActive) {
-    showToast("⚠️ 활성 프롬프트는 삭제할 수 없습니다. 다른 프롬프트를 활성으로 바꾼 후 시도하세요");
-    return;
-  }
-  const all = await getAllPrompts();
-  if (all.length <= 1) {
-    showToast("⚠️ 마지막 프롬프트는 삭제할 수 없습니다");
+    showToast("⚠️ 활성 프롬프트는 삭제할 수 없습니다. 다른 프롬프트를 활성으로 바꾼 뒤 삭제하세요");
     return;
   }
   if (!confirm(`"${prompt.name}" 프롬프트를 삭제할까요?`)) return;
-  await deletePrompt(prompt.id);
+  try {
+    await deletePrompt(prompt.id);
+  } catch (e) {
+    if (e.message === "ACTIVE_PROMPT_NOT_DELETABLE") {
+      showToast("⚠️ 활성 프롬프트는 삭제할 수 없습니다");
+      return;
+    }
+    throw e;
+  }
   await renderList();
   showToast("✅ 프롬프트가 삭제되었습니다");
 }
