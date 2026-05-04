@@ -50,8 +50,16 @@ async function init() {
     if (!currentClipForAI) return;
     const summary = document.getElementById('aiResponseInput').value.trim();
     if (!summary) { showToast("⚠️ 요약 내용을 입력하세요"); return; }
-    const updated = { ...currentClipForAI, summary };
-    await updateClip(updated);
+    // 모달 열린 동안 클립이 이동·삭제됐을 수 있으니 최신 레코드 재조회
+    const fresh = await getClip(currentClipForAI.id);
+    if (!fresh) {
+      showToast("❌ 해당 클립이 더 이상 존재하지 않습니다");
+      closeAIResultModal();
+      await refresh();
+      return;
+    }
+    fresh.summary = summary;
+    await updateClip(fresh);
     closeAIResultModal();
     await refresh();
     showToast("✅ 요약이 저장되었습니다");
