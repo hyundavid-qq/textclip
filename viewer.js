@@ -107,6 +107,7 @@ async function init() {
     e.stopPropagation();
     toggleBulkMoveDropdown();
   });
+  $("#btnBulkSelectAll").addEventListener("click", handleBulkSelectAll);
   $("#btnBulkDelete").addEventListener("click", handleBulkDelete);
   $("#btnBulkClear").addEventListener("click", clearSelection);
 }
@@ -1160,6 +1161,15 @@ async function handleBulkMoveToNew() {
     createdAt: new Date().toISOString(),
   });
   await handleBulkMove(newFolderId);
+}
+
+function handleBulkSelectAll() {
+  // 현재 필터링된 카드만 선택 (검색·폴더·키워드로 가려진 카드는 제외)
+  for (const clip of state.filtered) {
+    state.selectedClipIds.add(clip.id);
+  }
+  render();
+  updateBulkBar();
 }
 
 async function handleBulkDelete() {
