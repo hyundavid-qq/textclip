@@ -404,20 +404,7 @@ function makeCard(clip) {
   }
 
   const kwBox = card.querySelector(".card-keywords");
-  for (const kw of (clip.keywords || [])) {
-    const norm = kw.replace(/^#/, "").trim();
-    if (!norm) continue;
-    const tag = document.createElement("span");
-    tag.className = "tag";
-    tag.textContent = norm;
-    tag.addEventListener("click", () => {
-      state.keyword = norm;
-      renderSidebar();
-      render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-    kwBox.appendChild(tag);
-  }
+  renderKeywordsView(kwBox, clip);
 
   const expandBtn = card.querySelector(".card-expand");
   const bodyEl = card.querySelector(".card-body");
@@ -515,6 +502,142 @@ function makeFolderMenuItem(id, name, color, isCurrent, onClick) {
 function truncate(s, n) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
+}
+
+// ============================================================
+// 키워드 렌더 / 인라인 편집
+// ============================================================
+function renderKeywordsView(kwBox, clip) {
+  kwBox.innerHTML = "";
+  kwBox.classList.remove("editing");
+  kwBox.__editingClip = null;
+
+  for (const kw of (clip.keywords || [])) {
+    const norm = String(kw).replace(/^#/, "").trim();
+    if (!norm) continue;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = norm;
+    tag.addEventListener("click", () => {
+      state.keyword = norm;
+      renderSidebar();
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    kwBox.appendChild(tag);
+  }
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "btn-edit-keywords";
+  editBtn.textContent = "✏️";
+  editBtn.title = "키워드 편집";
+  editBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    enterKeywordEditMode(kwBox, clip);
+  });
+  kwBox.appendChild(editBtn);
+}
+
+function enterKeywordEditMode(kwBox, clip) {
+  // 다른 카드가 편집 중이면 먼저 view 모드로 되돌리기 (저장 안 함)
+  document.querySelectorAll(".card-keywords.editing").forEach(other => {
+    if (other !== kwBox && other.__editingClip) {
+      renderKeywordsView(other, other.__editingClip);
+    }
+  });
+
+  const working = (clip.keywords || [])
+    .map(k => String(k).replace(/^#/, "").trim())
+    .filter(Boolean);
+
+  kwBox.innerHTML = "";
+  kwBox.classList.add("editing");
+  kwBox.__editingClip = clip;
+
+  // 기존 키워드 → 편집 칩
+  for (const kw of working) {
+    kwBox.appendChild(buildKeywordChip(kw, working, kwBox));
+  }
+
+  // input
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "keyword-input";
+  input.placeholder = "+ 키워드 추가";
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const v = input.value.trim();
+      if (!v || working.includes(v)) {
+        input.value = "";
+        return;
+      }
+      working.push(v);
+      input.before(buildKeywordChip(v, working, kwBox));
+      input.value = "";
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      renderKeywordsView(kwBox, clip);
+    }
+  });
+  kwBox.appendChild(input);
+
+  // 저장 / 취소
+  const actions = document.createElement("span");
+  actions.className = "keyword-edit-actions";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "btn-save-keywords";
+  saveBtn.textContent = "저장";
+  saveBtn.addEventListener("click", async () => {
+    // 저장 시점에 클립이 사라졌을 수 있으니 재조회
+    const fresh = await getClip(clip.id);
+    if (!fresh) {
+      showToast("❌ 클립이 더 이상 존재하지 않습니다");
+      renderKeywordsView(kwBox, clip);
+      return;
+    }
+    fresh.keywords = [...working];
+    await updateClip(fresh);
+    await refresh();
+  });
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn-cancel-keywords";
+  cancelBtn.textContent = "취소";
+  cancelBtn.addEventListener("click", () => {
+    renderKeywordsView(kwBox, clip);
+  });
+
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  kwBox.appendChild(actions);
+
+  input.focus();
+}
+
+function buildKeywordChip(kw, working, kwBox) {
+  const chip = document.createElement("span");
+  chip.className = "keyword-chip-edit";
+  chip.append(kw);
+
+  const x = document.createElement("button");
+  x.type = "button";
+  x.className = "chip-x";
+  x.textContent = "×";
+  x.title = "삭제";
+  x.addEventListener("click", () => {
+    const idx = working.indexOf(kw);
+    if (idx !== -1) working.splice(idx, 1);
+    chip.remove();
+    kwBox.querySelector(".keyword-input")?.focus();
+  });
+  chip.appendChild(x);
+
+  return chip;
 }
 
 // ============================================================
