@@ -364,7 +364,7 @@ function makeCard(clip) {
   const t = $("#cardTemplate").content.cloneNode(true);
   const card = t.querySelector(".card");
 
-  card.querySelector(".card-date").textContent = formatDate(clip.date);
+  renderDateView(card.querySelector(".card-date"), clip);
 
   const safeHref = safeUrl(clip.url);
   const hasValidUrl = safeHref !== "#";
@@ -384,24 +384,10 @@ function makeCard(clip) {
   if (!hasValidUrl) folderMenu.style.marginLeft = "auto";
 
   const titleEl = card.querySelector(".card-title");
-  if (hasValidUrl) {
-    const a = document.createElement("a");
-    a.href = safeHref;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.textContent = clip.title || "(제목 없음)";
-    titleEl.appendChild(a);
-  } else {
-    titleEl.textContent = clip.title || "(제목 없음)";
-  }
+  renderTitleView(titleEl, clip);
 
   const sum = card.querySelector(".card-summary");
-  if (clip.summary) {
-    sum.textContent = clip.summary;
-    if (clip.summarySource === "ai") sum.classList.add("is-ai");
-  } else {
-    sum.remove();
-  }
+  renderSummaryView(sum, clip);
 
   const kwBox = card.querySelector(".card-keywords");
   renderKeywordsView(kwBox, clip);
@@ -502,6 +488,262 @@ function makeFolderMenuItem(id, name, color, isCurrent, onClick) {
 function truncate(s, n) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
+}
+
+// ============================================================
+// 인라인 편집 (제목 / 날짜 / 요약)
+// ============================================================
+function cancelAllInlineEdits() {
+  document.querySelectorAll('[data-inline-editing="true"]').forEach(el => {
+    if (typeof el.__cancelEdit === "function") el.__cancelEdit();
+  });
+}
+
+// ----- 제목 -----
+function renderTitleView(titleEl, clip) {
+  titleEl.innerHTML = "";
+  titleEl.classList.remove("editing");
+  delete titleEl.dataset.inlineEditing;
+  titleEl.__cancelEdit = null;
+
+  const safeHref = safeUrl(clip.url);
+  const hasValidUrl = safeHref !== "#";
+
+  const titleContent = hasValidUrl
+    ? document.createElement("a")
+    : document.createElement("span");
+  if (hasValidUrl) {
+    titleContent.href = safeHref;
+    titleContent.target = "_blank";
+    titleContent.rel = "noopener";
+  }
+  titleContent.className = "title-text";
+  titleContent.textContent = clip.title || "(제목 없음)";
+  titleEl.appendChild(titleContent);
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "btn-inline-edit btn-edit-title";
+  editBtn.textContent = "✏️";
+  editBtn.title = "제목 편집";
+  editBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    enterTitleEditMode(titleEl, clip);
+  });
+  titleEl.appendChild(editBtn);
+}
+
+function enterTitleEditMode(titleEl, clip) {
+  cancelAllInlineEdits();
+
+  titleEl.innerHTML = "";
+  titleEl.classList.add("editing");
+  titleEl.dataset.inlineEditing = "true";
+  titleEl.__cancelEdit = () => renderTitleView(titleEl, clip);
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "inline-input";
+  input.maxLength = 200;
+  input.value = clip.title || "";
+  input.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await saveTitle(clip, input.value, titleEl);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      renderTitleView(titleEl, clip);
+    }
+  });
+  titleEl.appendChild(input);
+
+  setTimeout(() => { input.focus(); input.select(); }, 0);
+}
+
+async function saveTitle(clip, newTitle, titleEl) {
+  const trimmed = newTitle.trim().slice(0, 200);
+  if (!trimmed) {
+    showToast("⚠️ 제목은 비워둘 수 없습니다");
+    return;
+  }
+  if (trimmed === clip.title) {
+    renderTitleView(titleEl, clip);
+    return;
+  }
+  const fresh = await getClip(clip.id);
+  if (!fresh) {
+    showToast("❌ 클립이 더 이상 존재하지 않습니다");
+    return;
+  }
+  fresh.title = trimmed;
+  await updateClip(fresh);
+  await refresh();
+}
+
+// ----- 날짜 -----
+function renderDateView(dateEl, clip) {
+  dateEl.innerHTML = "";
+  dateEl.classList.remove("editing");
+  delete dateEl.dataset.inlineEditing;
+  dateEl.__cancelEdit = null;
+
+  const text = document.createElement("span");
+  text.className = "card-date-text";
+  text.textContent = formatDate(clip.date);
+  dateEl.appendChild(text);
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "btn-inline-edit btn-edit-date";
+  editBtn.textContent = "✏️";
+  editBtn.title = "날짜 편집";
+  editBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    enterDateEditMode(dateEl, clip);
+  });
+  dateEl.appendChild(editBtn);
+}
+
+function enterDateEditMode(dateEl, clip) {
+  cancelAllInlineEdits();
+
+  dateEl.innerHTML = "";
+  dateEl.classList.add("editing");
+  dateEl.dataset.inlineEditing = "true";
+  dateEl.__cancelEdit = () => renderDateView(dateEl, clip);
+
+  const input = document.createElement("input");
+  input.type = "date";
+  input.className = "inline-input";
+  const m = (clip.date || "").match(/^\d{4}-\d{2}-\d{2}/);
+  input.value = m ? m[0] : "";
+  input.addEventListener("change", async () => {
+    const newDate = input.value;
+    if (!newDate) {
+      showToast("⚠️ 날짜를 선택하세요");
+      return;
+    }
+    if (newDate === clip.date) {
+      renderDateView(dateEl, clip);
+      return;
+    }
+    const fresh = await getClip(clip.id);
+    if (!fresh) {
+      showToast("❌ 클립이 더 이상 존재하지 않습니다");
+      return;
+    }
+    fresh.date = newDate;
+    await updateClip(fresh);
+    await refresh();
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      renderDateView(dateEl, clip);
+    }
+  });
+  dateEl.appendChild(input);
+
+  setTimeout(() => input.focus(), 0);
+}
+
+// ----- 요약 -----
+function renderSummaryView(sumEl, clip) {
+  sumEl.innerHTML = "";
+  sumEl.className = "card-summary";
+  delete sumEl.dataset.inlineEditing;
+  sumEl.__cancelEdit = null;
+
+  if (clip.summary) {
+    sumEl.append(clip.summary);
+    if (clip.summarySource === "ai") sumEl.classList.add("is-ai");
+    else if (clip.summarySource === "manual") sumEl.classList.add("is-manual");
+  } else {
+    sumEl.classList.add("is-empty");
+    const placeholder = document.createElement("span");
+    placeholder.className = "summary-placeholder";
+    placeholder.textContent = "요약 없음";
+    sumEl.appendChild(placeholder);
+  }
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "btn-inline-edit btn-edit-summary";
+  editBtn.textContent = "✏️";
+  editBtn.title = "요약 편집";
+  editBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    enterSummaryEditMode(sumEl, clip);
+  });
+  sumEl.appendChild(editBtn);
+}
+
+function enterSummaryEditMode(sumEl, clip) {
+  cancelAllInlineEdits();
+
+  sumEl.innerHTML = "";
+  sumEl.className = "card-summary editing";
+  sumEl.dataset.inlineEditing = "true";
+  sumEl.__cancelEdit = () => renderSummaryView(sumEl, clip);
+
+  const textarea = document.createElement("textarea");
+  textarea.className = "inline-textarea";
+  textarea.rows = 5;
+  textarea.value = clip.summary || "";
+  textarea.placeholder = "요약을 입력하세요…";
+  textarea.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      await saveSummary(clip, textarea.value, sumEl);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      renderSummaryView(sumEl, clip);
+    }
+  });
+  sumEl.appendChild(textarea);
+
+  const actions = document.createElement("div");
+  actions.className = "inline-edit-actions";
+
+  const hint = document.createElement("span");
+  hint.className = "inline-edit-hint";
+  hint.textContent = "Ctrl+Enter로 저장 · Esc로 취소";
+  actions.appendChild(hint);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "btn-save-keywords";
+  saveBtn.textContent = "저장";
+  saveBtn.addEventListener("click", async () => {
+    await saveSummary(clip, textarea.value, sumEl);
+  });
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn-cancel-keywords";
+  cancelBtn.textContent = "취소";
+  cancelBtn.addEventListener("click", () => {
+    renderSummaryView(sumEl, clip);
+  });
+
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  sumEl.appendChild(actions);
+
+  setTimeout(() => textarea.focus(), 0);
+}
+
+async function saveSummary(clip, newSummary, sumEl) {
+  const trimmed = newSummary.trim();
+  const fresh = await getClip(clip.id);
+  if (!fresh) {
+    showToast("❌ 클립이 더 이상 존재하지 않습니다");
+    return;
+  }
+  fresh.summary = trimmed;
+  fresh.summarySource = trimmed ? "manual" : "";
+  await updateClip(fresh);
+  await refresh();
 }
 
 // ============================================================
