@@ -24,6 +24,7 @@ const state = {
   folderId: ALL_FOLDER, // ALL_FOLDER = 전체 / null = 저장한 클립 / number = 특정 폴더
   keyword: null,
   sort: "savedAt-desc",
+  selectedClipIds: new Set(),
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -86,7 +87,20 @@ async function init() {
     document.querySelectorAll("details.card-folder-menu[open]").forEach(d => {
       if (!d.contains(e.target)) d.open = false;
     });
+    // 일괄 이동 드롭다운도 외부 클릭 시 닫기
+    const bulkDropdown = document.getElementById("bulkMoveDropdown");
+    if (bulkDropdown && !bulkDropdown.contains(e.target)) {
+      closeBulkMoveDropdown();
+    }
   });
+
+  // 일괄 작업 액션바
+  $("#btnBulkMove").addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleBulkMoveDropdown();
+  });
+  $("#btnBulkDelete").addEventListener("click", handleBulkDelete);
+  $("#btnBulkClear").addEventListener("click", clearSelection);
 }
 
 async function refresh() {
@@ -244,6 +258,7 @@ function makeFolderItem({ id, name, color, count, isInbox, isActive, isAll }) {
   }
 
   li.addEventListener("click", () => {
+    if (state.folderId !== id) clearSelection();
     state.folderId = id;
     renderSidebar();
     render();
@@ -395,6 +410,22 @@ function makeChip(label, onRemove) {
 function makeCard(clip) {
   const t = $("#cardTemplate").content.cloneNode(true);
   const card = t.querySelector(".card");
+
+  // 다중 선택 체크박스
+  const checkbox = card.querySelector(".card-checkbox");
+  const isSelected = state.selectedClipIds.has(clip.id);
+  checkbox.checked = isSelected;
+  if (isSelected) card.classList.add("is-selected");
+  checkbox.addEventListener("change", () => {
+    if (checkbox.checked) {
+      state.selectedClipIds.add(clip.id);
+      card.classList.add("is-selected");
+    } else {
+      state.selectedClipIds.delete(clip.id);
+      card.classList.remove("is-selected");
+    }
+    updateBulkBar();
+  });
 
   renderDateView(card.querySelector(".card-date"), clip);
 
@@ -1027,6 +1058,137 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   }[c]));
+}
+
+// ============================================================
+// 다중 선택 / 일괄 작업
+// ============================================================
+function updateBulkBar() {
+  const bar = document.getElementById("bulkActionBar");
+  const count = state.selectedClipIds.size;
+  if (count === 0) {
+    bar.hidden = true;
+    closeBulkMoveDropdown();
+  } else {
+    bar.hidden = false;
+    document.getElementById("bulkCount").textContent = count;
+  }
+}
+
+function clearSelection() {
+  state.selectedClipIds.clear();
+  document.querySelectorAll(".card.is-selected").forEach(c => c.classList.remove("is-selected"));
+  document.querySelectorAll(".card-checkbox:checked").forEach(cb => { cb.checked = false; });
+  updateBulkBar();
+}
+
+function toggleBulkMoveDropdown() {
+  const menu = document.querySelector("#bulkMoveDropdown .dropdown-menu");
+  if (!menu) return;
+  if (menu.hidden) {
+    populateBulkDropdown();
+    menu.hidden = false;
+  } else {
+    menu.hidden = true;
+  }
+}
+
+function closeBulkMoveDropdown() {
+  const menu = document.querySelector("#bulkMoveDropdown .dropdown-menu");
+  if (menu) menu.hidden = true;
+}
+
+function populateBulkDropdown() {
+  const menu = document.querySelector("#bulkMoveDropdown .dropdown-menu");
+  menu.innerHTML = "";
+
+  // 저장한 클립으로 (folderId = null)
+  const inboxItem = document.createElement("div");
+  inboxItem.className = "dropdown-item";
+  inboxItem.innerHTML = `<span style="font-size:14px">📥</span><span>저장한 클립으로</span>`;
+  inboxItem.addEventListener("click", () => handleBulkMove(null));
+  menu.appendChild(inboxItem);
+
+  menu.appendChild(makeDropdownSeparator());
+
+  // 사용자 폴더
+  const sorted = [...state.folders].sort((a, b) =>
+    (a.createdAt || "").localeCompare(b.createdAt || "")
+  );
+  for (const f of sorted) {
+    const item = document.createElement("div");
+    item.className = "dropdown-item";
+    const dot = document.createElement("span");
+    dot.className = "folder-dot";
+    dot.style.background = f.color || "#999";
+    item.appendChild(dot);
+    const span = document.createElement("span");
+    span.textContent = f.name;
+    item.appendChild(span);
+    item.addEventListener("click", () => handleBulkMove(f.id));
+    menu.appendChild(item);
+  }
+  if (sorted.length > 0) menu.appendChild(makeDropdownSeparator());
+
+  // 새 폴더 만들기
+  const newItem = document.createElement("div");
+  newItem.className = "dropdown-item special";
+  newItem.textContent = "+ 새 폴더 만들기";
+  newItem.addEventListener("click", handleBulkMoveToNew);
+  menu.appendChild(newItem);
+}
+
+function makeDropdownSeparator() {
+  const sep = document.createElement("div");
+  sep.className = "dropdown-separator";
+  return sep;
+}
+
+async function handleBulkMove(folderId) {
+  closeBulkMoveDropdown();
+  const ids = [...state.selectedClipIds];
+  if (ids.length === 0) return;
+  try {
+    await Promise.all(ids.map(id => moveClipToFolder(id, folderId)));
+    state.selectedClipIds.clear();
+    await refresh();
+    showToast(`✅ ${ids.length}개 클립을 이동했습니다`);
+  } catch (e) {
+    console.error(e);
+    showToast("❌ 일부 클립 이동 실패");
+    await refresh();
+  }
+}
+
+async function handleBulkMoveToNew() {
+  closeBulkMoveDropdown();
+  const raw = prompt("새 폴더 이름:");
+  if (!raw) return;
+  const name = raw.trim().slice(0, 50);
+  if (!name) return;
+  const newFolderId = await addFolder({
+    name,
+    color: nextFolderColor(state.folders),
+    createdAt: new Date().toISOString(),
+  });
+  await handleBulkMove(newFolderId);
+}
+
+async function handleBulkDelete() {
+  const count = state.selectedClipIds.size;
+  if (count === 0) return;
+  if (!confirm(`선택한 ${count}개의 클립을 삭제할까요?`)) return;
+  const ids = [...state.selectedClipIds];
+  try {
+    await Promise.all(ids.map(id => deleteClip(id)));
+    state.selectedClipIds.clear();
+    await refresh();
+    showToast(`✅ ${ids.length}개 클립을 삭제했습니다`);
+  } catch (e) {
+    console.error(e);
+    showToast("❌ 일부 클립 삭제 실패");
+    await refresh();
+  }
 }
 
 // ============================================================

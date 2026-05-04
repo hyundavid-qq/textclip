@@ -59,6 +59,17 @@
     </aside>
 
     <main class="main">
+      <div id="bulkActionBar" class="bulk-action-bar" hidden>
+        <span class="bulk-count"><strong id="bulkCount">0</strong>개 선택됨</span>
+        <div class="bulk-actions">
+          <div class="dropdown" id="bulkMoveDropdown">
+            <button class="bulk-btn" id="btnBulkMove">📁 폴더 이동 ▾</button>
+            <div class="dropdown-menu" hidden></div>
+          </div>
+          <button class="bulk-btn danger" id="btnBulkDelete">🗑 삭제</button>
+          <button class="bulk-btn ghost" id="btnBulkClear">× 전체 해제</button>
+        </div>
+      </div>
       <div id="activeFilters" class="active-filters"></div>
       <div id="cardList" class="card-list"></div>
       <div id="emptyState" class="empty-state" hidden>
@@ -79,6 +90,7 @@
 
   <template id="cardTemplate">
     <article class="card">
+      <input type="checkbox" class="card-checkbox" />
       <div class="card-meta">
         <span class="card-date"></span>
         <a class="card-source" target="_blank" rel="noopener">
