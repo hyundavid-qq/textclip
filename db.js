@@ -192,6 +192,7 @@ function parseClipsImport(text) {
     if (!title && !body) { skipped++; continue; }
 
     const summary = String(d.summary || "").slice(0, MAX_SUMMARY);
+    const summarySource = (d.summarySource === "ai" || d.summarySource === "manual") ? d.summarySource : "";
     const date = typeof d.date === "string" ? d.date.slice(0, 50) : "";
     const savedAt = typeof d.savedAt === "string" ? d.savedAt : new Date().toISOString();
 
@@ -211,10 +212,41 @@ function parseClipsImport(text) {
       } catch { /* invalid url → 빈 값 */ }
     }
 
-    cleaned.push({ title, date, body, summary, keywords, url, savedAt });
+    const folderId = typeof d.folderId === "number" ? d.folderId : null;
+
+    cleaned.push({ title, date, body, summary, summarySource, keywords, folderId, url, savedAt });
   }
 
   return { cleaned, skipped };
+}
+
+// 가져올 클립과 기존 클립 비교해 중복 분리 (UI 비의존, viewer/settings 공용)
+// 중복 키: `${title}|||${url}`. url이 빈 경우 중복 검사 스킵 (항상 신규로 추가)
+function dedupeClipsAgainstExisting(cleaned, existingClips) {
+  const existingKeys = new Set();
+  for (const c of existingClips) {
+    const url = (c.url || "").trim();
+    if (!url) continue;
+    existingKeys.add(`${(c.title || "").trim()}|||${url}`);
+  }
+
+  const newClips = [];
+  const dupClips = [];
+  for (const clip of cleaned) {
+    const url = (clip.url || "").trim();
+    if (!url) {
+      newClips.push(clip);
+      continue;
+    }
+    const key = `${(clip.title || "").trim()}|||${url}`;
+    if (existingKeys.has(key)) {
+      dupClips.push(clip);
+    } else {
+      newClips.push(clip);
+      existingKeys.add(key); // 같은 파일 안의 중복도 스킵
+    }
+  }
+  return { newClips, dupClips };
 }
 
 // 폴더 삭제 + 해당 폴더의 클립을 저장한 클립(folderId=null)으로 옮김. 한 트랜잭션으로 atomic 처리

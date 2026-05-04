@@ -20,7 +20,13 @@
       <input type="text" id="searchBox" placeholder="제목 · 본문 · 키워드 검색" />
     </div>
     <div class="topbar-actions">
-      <button id="btnSettings" class="ghost" title="설정">⚙</button>
+      <button id="btnSettings" class="settings-btn" title="AI 프롬프트 설정">
+        <span class="settings-icon">⚙</span>
+        <span class="settings-label">
+          <span class="settings-label-top">AI 프롬프트</span>
+          <span class="settings-label-bottom" id="activePromptName">로딩...</span>
+        </span>
+      </button>
       <button id="btnExport" class="ghost" title="JSON 파일로 모든 클립 백업 — 다른 PC로 옮길 때 사용">📤 내보내기</button>
       <button id="btnImport" class="ghost" title="JSON 파일에서 클립 복원 — 기존 클립에 추가됨 (중복 주의)">📥 가져오기</button>
       <input type="file" id="fileInput" accept="application/json" hidden />

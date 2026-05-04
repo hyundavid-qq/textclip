@@ -31,6 +31,14 @@ const $ = (sel) => document.querySelector(sel);
 
 async function init() {
   await refresh();
+  await updateActivePromptDisplay();
+
+  // settings에서 활성 프롬프트 변경 시 viewer 탭에서도 즉시 반영
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes.aiPrompts) {
+      updateActivePromptDisplay();
+    }
+  });
 
   $("#searchBox").addEventListener("input", (e) => {
     state.search = e.target.value.trim().toLowerCase();
@@ -974,15 +982,24 @@ async function importClips(e) {
       return;
     }
 
-    const proceed = confirm(
-      `${cleaned.length}개의 클립을 추가합니다 (기존 클립은 유지). 계속할까요?\n\n⚠️ 중복 검사는 하지 않으니 같은 파일을 여러 번 가져오면 중복이 생깁니다.`
-    );
-    if (!proceed) return;
+    const existing = await getAllClips();
+    const { newClips, dupClips } = dedupeClipsAgainstExisting(cleaned, existing);
 
-    const added = await bulkAddClips(cleaned);
-    let msg = `✅ ${added}개 클립을 가져왔습니다.`;
-    if (skipped > 0) msg += `\n(${skipped}개는 형식이 맞지 않아 스킵되었습니다.)`;
-    alert(msg);
+    if (newClips.length === 0) {
+      alert(`⚠️ 가져올 새 클립이 없습니다.\n${cleaned.length}개 모두 이미 존재합니다.`);
+      return;
+    }
+
+    const confirmMsg = dupClips.length > 0
+      ? `총 ${cleaned.length}개 중 ${dupClips.length}개는 중복으로 스킵됩니다.\n${newClips.length}개의 새 클립을 추가합니다.\n\n계속할까요?`
+      : `${newClips.length}개의 클립을 추가합니다 (기존 클립은 유지).\n계속할까요?`;
+    if (!confirm(confirmMsg)) return;
+
+    const added = await bulkAddClips(newClips);
+    const message = dupClips.length > 0
+      ? `✅ ${added}개 추가됨, ${dupClips.length}개 중복 스킵됨`
+      : `✅ ${added}개 클립을 가져왔습니다`;
+    showToast(message);
     await refresh();
   } catch (err) {
     alert(`❌ 가져오기 실패: ${err.message}`);
@@ -1207,6 +1224,24 @@ function openAIResultModal(clip) {
 function closeAIResultModal() {
   document.getElementById('aiResultModal').hidden = true;
   currentClipForAI = null;
+}
+
+async function updateActivePromptDisplay() {
+  const el = document.getElementById("activePromptName");
+  if (!el) return;
+  try {
+    const active = await getActivePrompt();
+    if (active && active.name) {
+      el.textContent = active.name;
+      el.classList.remove("is-empty");
+    } else {
+      el.textContent = "프롬프트 없음";
+      el.classList.add("is-empty");
+    }
+  } catch (e) {
+    el.textContent = "프롬프트 없음";
+    el.classList.add("is-empty");
+  }
 }
 
 init();
