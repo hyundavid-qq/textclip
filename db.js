@@ -212,7 +212,9 @@ function parseClipsImport(text) {
       } catch { /* invalid url → 빈 값 */ }
     }
 
-    const folderId = typeof d.folderId === "number" ? d.folderId : null;
+    // Imported clips go to "Saved Clips" (no folder) by default
+    // to avoid folderId mismatch across Chrome profiles.
+    const folderId = null;
 
     cleaned.push({ title, date, body, summary, summarySource, keywords, folderId, url, savedAt });
   }
@@ -221,24 +223,16 @@ function parseClipsImport(text) {
 }
 
 // 가져올 클립과 기존 클립 비교해 중복 분리 (UI 비의존, viewer/settings 공용)
-// 중복 키: `${title}|||${url}`. url이 빈 경우 중복 검사 스킵 (항상 신규로 추가)
+// Same title+url is treated as duplicate. URL-less clips dedupe by title only
+// (key becomes "title|||" which matches consistently across url-less clips).
 function dedupeClipsAgainstExisting(cleaned, existingClips) {
-  const existingKeys = new Set();
-  for (const c of existingClips) {
-    const url = (c.url || "").trim();
-    if (!url) continue;
-    existingKeys.add(`${(c.title || "").trim()}|||${url}`);
-  }
+  const keyOf = (c) => `${(c.title || "").trim()}|||${(c.url || "").trim()}`;
+  const existingKeys = new Set(existingClips.map(keyOf));
 
   const newClips = [];
   const dupClips = [];
   for (const clip of cleaned) {
-    const url = (clip.url || "").trim();
-    if (!url) {
-      newClips.push(clip);
-      continue;
-    }
-    const key = `${(clip.title || "").trim()}|||${url}`;
+    const key = keyOf(clip);
     if (existingKeys.has(key)) {
       dupClips.push(clip);
     } else {

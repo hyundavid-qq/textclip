@@ -991,14 +991,14 @@ async function importClips(e) {
     }
 
     const confirmMsg = dupClips.length > 0
-      ? `총 ${cleaned.length}개 중 ${dupClips.length}개는 중복으로 스킵됩니다.\n${newClips.length}개의 새 클립을 추가합니다.\n\n계속할까요?`
-      : `${newClips.length}개의 클립을 추가합니다 (기존 클립은 유지).\n계속할까요?`;
+      ? `총 ${cleaned.length}개 중 ${dupClips.length}개는 중복으로 스킵, ${newClips.length}개 추가됩니다.\n📁 가져온 클립은 '저장한 클립'으로 들어갑니다 (폴더 미지정).\n\n계속할까요?`
+      : `${newClips.length}개의 클립을 추가합니다 (기존 클립은 유지).\n📁 가져온 클립은 '저장한 클립'으로 들어갑니다 (폴더 미지정).\n\n계속할까요?`;
     if (!confirm(confirmMsg)) return;
 
     const added = await bulkAddClips(newClips);
     const message = dupClips.length > 0
-      ? `✅ ${added}개 추가됨, ${dupClips.length}개 중복 스킵됨`
-      : `✅ ${added}개 클립을 가져왔습니다`;
+      ? `✅ ${added}개 추가됨 (저장한 클립으로) · ${dupClips.length}개 중복 스킵`
+      : `✅ ${added}개 추가됨 (저장한 클립으로)`;
     showToast(message);
     await refresh();
   } catch (err) {
