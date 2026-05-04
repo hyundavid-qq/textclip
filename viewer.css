@@ -732,6 +732,107 @@ button.ghost:hover {
   color: var(--text-subtle);
 }
 
+/* ===== AI 요약 버튼 ===== */
+.card-ai-summarize {
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  margin-top: 4px;
+  margin-left: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.card-ai-summarize:hover {
+  color: #6b46c1;
+  background: #f3eefe;
+  border-color: #d4c4f7;
+}
+
+/* ===== 모달 ===== */
+.modal {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal[hidden] { display: none; }
+.modal-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+}
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 560px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-narrow { max-width: 480px; }
+.modal-close {
+  position: absolute; top: 12px; right: 12px;
+  background: transparent; border: none;
+  font-size: 22px; cursor: pointer; color: #999;
+  width: 32px; height: 32px; border-radius: 50%;
+}
+.modal-close:hover { background: #f3f0e9; color: #333; }
+.modal-content h2 { margin-top: 0; font-size: 18px; }
+.modal-hint { color: var(--text-muted); font-size: 13px; }
+.modal-content textarea {
+  width: 100%; box-sizing: border-box;
+  padding: 12px; border: 1px solid var(--border-strong);
+  border-radius: 6px; font-family: inherit;
+  font-size: 13px; resize: vertical; min-height: 140px;
+  margin: 12px 0;
+}
+.modal-content textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 16px;
+}
+.btn-primary {
+  padding: 9px 18px; background: var(--accent);
+  color: white; border: none; border-radius: 5px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-primary:hover { background: #243d5c; }
+.btn-secondary {
+  padding: 9px 18px; background: transparent;
+  color: var(--text-muted); border: 1px solid var(--border-strong);
+  border-radius: 5px; font-weight: 500; cursor: pointer;
+  font-family: inherit;
+}
+.btn-secondary:hover { background: #f3f0e9; color: #333; }
+
+/* ===== 토스트 ===== */
+.toast-container {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%); z-index: 1100;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: #1e1e1e; color: white;
+  padding: 12px 20px; border-radius: 8px;
+  font-size: 13.5px; font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  animation: toastIn 0.25s ease, toastOut 0.25s ease 3.5s forwards;
+  max-width: 480px;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(20px); }
+}
+
 /* ===== 반응형 ===== */
 @media (max-width: 800px) {
   .layout { grid-template-columns: 1fr; }

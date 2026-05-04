@@ -42,6 +42,26 @@ async function init() {
   $("#btnClearAll").addEventListener("click", confirmClearAll);
   $("#btnNewFolder").addEventListener("click", handleNewFolder);
 
+  // AI 결과 입력 모달 이벤트
+  document.querySelector('#aiResultModal .modal-close').addEventListener('click', closeAIResultModal);
+  document.querySelector('#aiResultModal .modal-overlay').addEventListener('click', closeAIResultModal);
+  document.getElementById('btnCancelAI').addEventListener('click', closeAIResultModal);
+  document.getElementById('btnSaveAISummary').addEventListener('click', async () => {
+    if (!currentClipForAI) return;
+    const summary = document.getElementById('aiResponseInput').value.trim();
+    if (!summary) { showToast("⚠️ 요약 내용을 입력하세요"); return; }
+    const updated = { ...currentClipForAI, summary };
+    await updateClip(updated);
+    closeAIResultModal();
+    await refresh();
+    showToast("✅ 요약이 저장되었습니다");
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('aiResultModal').hidden) {
+      closeAIResultModal();
+    }
+  });
+
   // 카드의 폴더 이동 메뉴(<details>) 외부 클릭 시 닫기
   document.addEventListener("click", (e) => {
     document.querySelectorAll("details.card-folder-menu[open]").forEach(d => {
@@ -393,6 +413,8 @@ function makeCard(clip) {
     expandBtn.style.display = "none";
   }
 
+  card.querySelector(".card-ai-summarize").addEventListener("click", () => handleAISummarize(clip));
+
   card.querySelector(".card-delete").addEventListener("click", async (e) => {
     e.stopPropagation();
     if (!confirm(`"${(clip.title || "").slice(0, 30)}" 클립을 삭제할까요?`)) return;
@@ -588,6 +610,53 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   }[c]));
+}
+
+// ============================================================
+// AI 요약 클립보드 브릿지
+// ============================================================
+let currentClipForAI = null;
+
+function showToast(message, duration = 4000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), duration);
+}
+
+async function handleAISummarize(clip) {
+  try {
+    const prompt = await getActivePrompt();
+    if (!prompt) {
+      showToast("⚠️ 활성 프롬프트가 없습니다. 설정에서 추가하세요.");
+      return;
+    }
+    const body = clip.body || clip.content || "";
+    const textToCopy = prompt.content + body;
+    await navigator.clipboard.writeText(textToCopy);
+    showToast("✅ 복사 완료! 사용하시는 AI(Gemini, GPT, Claude 등)에 붙여넣으세요");
+    // 잠깐 후 결과 입력 모달 자동 표시 (사용자가 AI에 붙여넣고 응답받아올 시간)
+    setTimeout(() => openAIResultModal(clip), 800);
+  } catch (e) {
+    console.error(e);
+    showToast("❌ 복사 실패: " + e.message);
+  }
+}
+
+function openAIResultModal(clip) {
+  currentClipForAI = clip;
+  const modal = document.getElementById('aiResultModal');
+  const textarea = document.getElementById('aiResponseInput');
+  textarea.value = "";
+  modal.hidden = false;
+  setTimeout(() => textarea.focus(), 100);
+}
+
+function closeAIResultModal() {
+  document.getElementById('aiResultModal').hidden = true;
+  currentClipForAI = null;
 }
 
 init();

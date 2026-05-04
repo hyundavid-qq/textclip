@@ -97,11 +97,30 @@
       <p class="card-summary"></p>
       <div class="card-keywords"></div>
       <button class="card-expand">본문 펼치기 ▾</button>
+      <button class="card-ai-summarize" title="AI에 보낼 텍스트 복사">🤖 AI 요약</button>
       <div class="card-body" hidden></div>
     </article>
   </template>
 
+  <div id="aiResultModal" class="modal" hidden>
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-narrow">
+      <button class="modal-close">×</button>
+      <h2>🤖 AI 응답 붙여넣기</h2>
+      <p class="modal-hint">AI에서 받은 요약을 아래에 붙여넣고 저장하세요.</p>
+      <textarea id="aiResponseInput"
+                placeholder="여기에 AI 응답을 붙여넣으세요…"
+                rows="8"></textarea>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="btnCancelAI">취소</button>
+        <button class="btn-primary" id="btnSaveAISummary">💾 요약 저장</button>
+      </div>
+    </div>
+  </div>
+  <div id="toastContainer" class="toast-container"></div>
+
   <script src="db.js"></script>
+  <script src="ai-prompts.js"></script>
   <script src="viewer.js"></script>
 </body>
 </html>
