@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TextClip 설정</title>
+  <title>AI 요약 프롬프트 설정</title>
   <link rel="stylesheet" href="viewer.css" />
   <link rel="stylesheet" href="settings.css" />
 </head>
 <body>
   <header class="settings-header">
     <a href="viewer.html">← 보관함으로</a>
-    <h1>TextClip 설정</h1>
+    <h1>AI 요약 프롬프트 설정</h1>
   </header>
 
   <main class="settings-main">
@@ -41,48 +41,6 @@
 
       <div id="promptList" class="prompt-list"></div>
     </section>
-
-    <section>
-      <div class="section-header">
-        <h2>데이터 관리</h2>
-      </div>
-      <p class="section-desc">
-        모든 데이터는 이 Chrome 프로필의 IndexedDB에 저장됩니다.
-        외부 서버에 전송되지 않습니다.
-      </p>
-
-      <div class="data-stats" id="dataStats">
-        <div class="stat-row">
-          <span class="stat-label">저장된 클립</span>
-          <span class="stat-value" id="statClips">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">폴더</span>
-          <span class="stat-value" id="statFolders">—</span>
-        </div>
-        <div class="stat-row" id="lastBackupRow">
-          <span class="stat-label">마지막 백업</span>
-          <span class="stat-value" id="statLastBackup">아직 백업하지 않음</span>
-        </div>
-      </div>
-
-      <div class="data-actions">
-        <button class="primary-btn" id="btnExportData">📤 전체 내보내기 (JSON)</button>
-        <button class="ghost-btn" id="btnImportData">📥 가져오기 (병합)</button>
-        <input type="file" id="dataFileInput" accept="application/json" hidden />
-      </div>
-
-      <details class="data-notice">
-        <summary>📌 주의사항 및 백업 팁</summary>
-        <ul>
-          <li>데이터는 외부 서버에 저장되지 않습니다. 본인 PC에만 있습니다.</li>
-          <li>Chrome 프로필을 삭제하거나 PC를 변경하면 데이터가 사라집니다.</li>
-          <li>가져오기 시 중복 검사는 하지 않습니다. 같은 파일을 두 번 가져오면 중복됩니다.</li>
-          <li><strong>💡 팁:</strong> 내보낸 JSON을 Dropbox, iCloud, Google Drive 같은 클라우드 폴더에 저장하면 다른 PC에서 같은 파일을 가져와 쉽게 복원할 수 있습니다.</li>
-          <li>주기적으로 (예: 1주일에 한 번) 백업하시기를 권장합니다.</li>
-        </ul>
-      </details>
-    </section>
   </main>
 
   <div id="toastContainer" class="toast-container"></div>
@@ -102,7 +60,6 @@
     </div>
   </template>
 
-  <script src="db.js"></script>
   <script src="ai-prompts.js"></script>
   <script src="settings.js"></script>
 </body>

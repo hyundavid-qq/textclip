@@ -966,7 +966,6 @@ async function exportClips() {
   a.download = `textclip-${new Date().toISOString().split("T")[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  await chrome.storage.local.set({ lastExportDate: new Date().toISOString() });
 }
 
 async function importClips(e) {
