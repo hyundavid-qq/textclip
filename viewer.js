@@ -1,5 +1,8 @@
 // viewer.js — 보관함 메인 로직
 
+// folderId 특수값: "전체" 가상 폴더 (모든 클립 표시, 필터 없음)
+const ALL_FOLDER = "__ALL__";
+
 // 새 폴더 생성 시 자동 배정되는 색상 팔레트 (9개)
 const FOLDER_PALETTE = [
   "#5b6b7d", // slate
@@ -18,7 +21,7 @@ const state = {
   folders: [],
   filtered: [],
   search: "",
-  folderId: null,   // null = 저장한 클립, number = 특정 폴더
+  folderId: ALL_FOLDER, // ALL_FOLDER = 전체 / null = 저장한 클립 / number = 특정 폴더
   keyword: null,
   sort: "savedAt-desc",
 };
@@ -114,7 +117,17 @@ function renderSidebar() {
   const list = $("#folderList");
   list.innerHTML = "";
 
-  // 저장한 클립 — 항상 맨 위, 액션 없음
+  // 전체 — 가상 폴더, 항상 맨 위
+  list.appendChild(makeFolderItem({
+    id: ALL_FOLDER,
+    name: "전체",
+    color: null,
+    count: state.allClips.length,
+    isAll: true,
+    isActive: state.folderId === ALL_FOLDER,
+  }));
+
+  // 저장한 클립 — 폴더 미지정, 액션 없음
   list.appendChild(makeFolderItem({
     id: null,
     name: "저장한 클립",
@@ -170,11 +183,19 @@ function renderSidebar() {
   }
 }
 
-function makeFolderItem({ id, name, color, count, isInbox, isActive }) {
+function makeFolderItem({ id, name, color, count, isInbox, isActive, isAll }) {
   const li = document.createElement("li");
-  li.className = "folder-item" + (isActive ? " active" : "") + (isInbox ? " folder-inbox" : "");
+  li.className = "folder-item"
+    + (isActive ? " active" : "")
+    + (isInbox ? " folder-inbox" : "")
+    + (isAll ? " folder-all" : "");
 
-  if (isInbox) {
+  if (isAll) {
+    const icon = document.createElement("span");
+    icon.className = "folder-icon";
+    icon.textContent = "🗂";
+    li.appendChild(icon);
+  } else if (isInbox) {
     const icon = document.createElement("span");
     icon.className = "folder-icon";
     icon.textContent = "📥";
@@ -196,7 +217,8 @@ function makeFolderItem({ id, name, color, count, isInbox, isActive }) {
   countEl.textContent = count;
   li.appendChild(countEl);
 
-  if (!isInbox) {
+  // 가상 폴더(전체/저장한 클립)는 액션 없음
+  if (!isInbox && !isAll) {
     const actions = document.createElement("span");
     actions.className = "folder-actions";
 
@@ -269,7 +291,7 @@ async function handleRenameFolder(id, oldName) {
 async function handleDeleteFolder(id, name) {
   if (!confirm(`"${name}" 폴더를 삭제할까요?\n\n폴더 안의 클립은 저장한 클립으로 이동됩니다.`)) return;
   await deleteFolder(id);
-  if (state.folderId === id) state.folderId = null;
+  if (state.folderId === id) state.folderId = ALL_FOLDER;
   await refresh();
 }
 
@@ -279,7 +301,9 @@ async function handleDeleteFolder(id, name) {
 function render() {
   let arr = [...state.allClips];
 
-  if (state.folderId === null) {
+  if (state.folderId === ALL_FOLDER) {
+    // 전체: 필터 없음
+  } else if (state.folderId === null) {
     arr = arr.filter(c => !c.folderId);
   } else {
     arr = arr.filter(c => c.folderId === state.folderId);
@@ -314,11 +338,19 @@ function render() {
 
   const chips = $("#activeFilters");
   chips.innerHTML = "";
-  if (state.folderId !== null) {
+  if (state.folderId === ALL_FOLDER) {
+    // 전체일 땐 chip 없음
+  } else if (state.folderId === null) {
+    chips.appendChild(makeChip(`폴더: 저장한 클립`, () => {
+      state.folderId = ALL_FOLDER;
+      renderSidebar();
+      render();
+    }));
+  } else {
     const folder = state.folders.find(f => f.id === state.folderId);
     if (folder) {
       chips.appendChild(makeChip(`폴더: ${folder.name}`, () => {
-        state.folderId = null;
+        state.folderId = ALL_FOLDER;
         renderSidebar();
         render();
       }));
