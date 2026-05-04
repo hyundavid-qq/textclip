@@ -2,13 +2,12 @@
   "manifest_version": 3,
   "name": "TextClip",
   "version": "1.0.0",
-  "description": "원하는 글을 드래그 한 번에 모으는 클리핑 도구. 어디서든 텍스트를 골라 저장하고 폴더로 정리하세요.",
+  "description": "Clip text from any webpage with right-click. Organize into folders. Summarize with your AI — all stored locally.",
   "permissions": [
     "contextMenus",
     "storage",
     "unlimitedStorage",
-    "notifications",
-    "clipboardWrite"
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"

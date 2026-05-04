@@ -1,87 +1,97 @@
-# 📰 TextClip v1.0
+# 📰 TextClip
 
-웹페이지에서 텍스트 드래그 → 우클릭 한 번에 저장.
-**드래그한 텍스트 = 본문**. 페이지 DOM 추출 같은 거 안 함. 어떤 사이트든 동일하게 동작.
+> Clip text from any webpage with right-click. Organize into folders. Summarize with your AI — all stored locally.
+>
+> 어디서든 드래그 + 우클릭으로 저장. 폴더로 정리. 본인이 쓰는 AI로 한 번에 요약.
 
----
-
-## ⚙️ 설치
-
-1. `chrome://extensions` 열기
-2. **개발자 모드** ON
-3. **압축해제된 확장 프로그램 로드** → 이 폴더 선택
+**Version**: 1.0.0 · **License**: MIT
 
 ---
 
-## 📋 사용법
+## ✨ Key Features / 핵심 기능
 
-**📌 텍스트 드래그 → 우클릭 → 저장**
-어떤 페이지에서든 가능합니다. 드래그한 텍스트가 그대로 본문으로 저장됩니다.
-제목·날짜는 텍스트 앞부분에서 자동 추출 (없으면 페이지 제목·오늘 날짜로 fallback).
-
-**💾 본인 PC에 저장 (외부 전송 없음)**
-모든 클립은 같은 Chrome 프로필에서만 보입니다.
-다른 PC로 옮기려면 보관함 → **📤 내보내기** (JSON).
-
-**🤖 AI 요약 — 본인이 쓰는 AI 활용**
-GPT, Gemini, Claude 등 어디든 OK. API 키 불필요, 클립보드로 복사·붙여넣기 방식.
-설정에서 직무별 프리셋 11종(VC/PR/법무/PM 등) 중 선택 가능.
-
-**보관함**
-- 좌측 사이드바: 폴더 목록, 정렬, 키워드 TOP 20
-- 새 클립은 기본적으로 **저장한 클립**에 들어감 → 폴더 만들어서 정리
-- 카드 호버: 제목·날짜·요약 ✏️ 인라인 편집, 키워드 칩 추가/삭제
-- 카드 좌측 체크박스 → 다중 선택 → 일괄 폴더 이동·삭제
-- #태그 클릭 → 같은 키워드 필터
-- 검색창: 제목/본문/키워드 실시간 검색
-- 본문 펼치기 → 드래그한 전체 텍스트 표시
+- 📌 **One-click capture** — Drag → right-click → save. Works on any page.
+  드래그 → 우클릭 → 저장. 어떤 웹페이지든.
+- 🗂 **Folder organization** — Custom folders with color tags, multi-select bulk move/delete.
+  사용자 폴더 + 색상 + 다중 선택 일괄 이동·삭제.
+- 🤖 **AI summary, BYOK-free** — Copies prompt+body to clipboard for use with any AI (GPT/Gemini/Claude). No API key.
+  본인이 쓰는 AI에 클립보드로 전달. API 키 불필요.
+- 💼 **10 role-based prompt presets** — VC, PR, Strategy, Legal, Editor, PM, Sales, HR, Policy, Student. Plus custom prompts and ⭐ favorites.
+  직무별 프리셋 10종 + 사용자 프롬프트 + ⭐ 즐겨찾기.
+- ✏️ **Inline editing** — Title, date, summary, keywords editable directly on the card.
+  제목·날짜·요약·키워드 인라인 편집.
+- 🔒 **Local-only storage** — All data in Chrome IndexedDB on your device. Zero external network calls.
+  IndexedDB 로컬 저장. 외부 통신 0.
 
 ---
 
-## 💡 활용 예시
+## 📦 Install / 설치
 
-- 📚 **공부 중 만난 좋은 설명 모으기** — 강의 노트, 기술 문서, 블로그에서 핵심 단락만 골라 저장
-- ✍️ **블로그 작성 시 참고자료 수집** — 글 쓰기 전에 출처별로 인용할 부분만 미리 모아두기
-- 💬 **인상 깊은 인용구/명언 보관** — 책 리뷰, 인터뷰, SNS에서 마음에 든 문장 아카이브
-- 💼 **업무 자료 발췌** — 보고서·리서치 중 다시 들춰볼 만한 단락만 추려서 정리
+**Manual install (current):**
 
----
+1. Clone or download this repository
+2. Open `chrome://extensions`
+3. Enable **Developer mode** (top right)
+4. Click **Load unpacked** → select this folder
 
-## 🧠 분석 방식
+**수동 설치:**
 
-다운로드 0, API 키 0, 외부 통신 0. 휴리스틱으로 즉시 처리.
+1. 이 저장소 클론 또는 다운로드
+2. `chrome://extensions` 열기
+3. **개발자 모드** ON (우측 상단)
+4. **압축해제된 확장 프로그램 로드** → 이 폴더 선택
 
-| 필드 | 방식 |
-|---|---|
-| **요약** | 본문의 첫 2-3 문장 |
-| **키워드** | 빈도수 + 단어 길이 가중치, 한국어 조사/불용어 제거 |
-
-분류는 자동으로 안 함 — 본인이 만든 폴더로 직접 정리.
+> Chrome Web Store distribution coming soon.
 
 ---
 
-## 📂 파일 구조
+## 📋 Usage / 사용법
+
+1. **Save a clip / 클립 저장**
+   Select text on any page → right-click → "TextClip에 저장".
+   웹페이지에서 텍스트 드래그 → 우클릭 → "TextClip에 저장".
+
+2. **Organize / 정리**
+   Open the library, create folders in the sidebar, select cards with the checkbox to move in bulk.
+   보관함 열기 → 사이드바에서 폴더 만들기 → 카드 좌측 체크박스로 다중 선택 → 일괄 이동.
+
+3. **Summarize with AI / AI 요약**
+   Click 🤖 AI 요약 → prompt + body copy to clipboard → paste into your AI → paste the response back into the modal → save.
+   🤖 AI 요약 클릭 → 프롬프트+본문이 클립보드 복사 → 본인 AI에 붙여넣기 → 응답을 다시 모달에 붙여넣고 저장.
+
+4. **Manage prompts / 프롬프트 관리**
+   ⚙ → use any of the 10 role presets, add your own, or mark with ⭐.
+   ⚙ → 직무별 프리셋 10종 활용, 새 프롬프트 추가, ⭐ 즐겨찾기.
+
+---
+
+## 🔒 Privacy / 프라이버시
+
+- **No external network calls.** All clips and prompts stay in your local Chrome profile.
+  외부 통신 없음. 클립과 프롬프트 모두 본 Chrome 프로필 내에만.
+- **No API keys, no telemetry, no analytics.**
+  API 키 / 텔레메트리 / 애널리틱스 없음.
+- **Backup**: Library → 📤 Export to JSON. Restore on another device with 📥 Import.
+  백업: 보관함 → 📤 내보내기 (JSON). 다른 기기에서 📥 가져오기.
+
+---
+
+## 📂 Project Structure
 
 ```
-├── manifest.json
-├── background.js          저장 로직 (드래그 텍스트 파싱 + 분석 + 저장)
-├── lite-analyzer.js       휴리스틱 분석기
-├── db.js                  IndexedDB 래퍼
-├── popup.html/js/css      확장 아이콘 클릭 팝업
-├── viewer.html/js/css     보관함 UI
-└── icons/
+manifest.json
+background.js          Save logic (drag-text parsing + heuristic analysis + IDB write)
+ai-prompts.js          Prompt store (chrome.storage.local)
+db.js                  IndexedDB wrapper (clips + folders)
+lite-analyzer.js       Heuristic summary + keyword extraction
+popup.html/js/css      Toolbar popup
+viewer.html/js/css     Library UI
+settings.html/js/css   Prompt settings page
+icons/                 16/48/128 PNG
 ```
 
 ---
 
-## 💾 데이터
+## 🪪 License
 
-Chrome IndexedDB에 저장. 본 Chrome 프로필에만 존재.
-백업: 보관함 → **📤 내보내기** (JSON)
-
----
-
-## 🔧 디버깅
-
-`chrome://extensions` → TextClip 카드의 **"서비스 워커"** 클릭 → Console에서:
-- `[TextClip] ✅ 저장 완료` 로그 확인
+MIT License — free to use, modify, and distribute.

@@ -11,7 +11,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "save-news-clip" || !info.selectionText) return;
-  console.log("[TextClip] 저장 시작...");
 
   try {
     const selectedText = info.selectionText.trim();
