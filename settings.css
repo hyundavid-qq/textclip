@@ -234,6 +234,75 @@
   margin-top: 18px;
 }
 
+/* 데이터 관리 섹션 */
+.data-stats {
+  background: var(--bg-soft);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+}
+.stat-label { color: var(--text-muted); }
+.stat-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.data-actions {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+.primary-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.primary-btn:hover { background: #243d5c; }
+.ghost-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+  padding: 9px 16px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ghost-btn:hover { background: var(--bg-soft); color: var(--text); }
+
+.data-notice {
+  margin-top: 16px;
+  background: #fff8e8;
+  border: 1px solid #f0e3c1;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+}
+.data-notice summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #5a4a2a;
+  padding: 2px 0;
+}
+.data-notice ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  line-height: 1.7;
+  color: #5a4a2a;
+}
+
 /* 모바일 */
 @media (max-width: 600px) {
   .settings-main { padding: 20px 16px 60px; }

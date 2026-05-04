@@ -170,6 +170,53 @@ async function updateFolder(folder) {
   });
 }
 
+// JSON 텍스트 → 정제된 clip 배열 (UI 비의존, viewer/settings 공용)
+function parseClipsImport(text) {
+  const data = JSON.parse(text);
+  if (!Array.isArray(data)) throw new Error("JSON이 배열 형식이 아닙니다");
+
+  const MAX_TITLE = 500;
+  const MAX_BODY = 100 * 1024;
+  const MAX_SUMMARY = 2000;
+  const MAX_KEYWORDS = 20;
+  const MAX_KEYWORD_LEN = 50;
+
+  const cleaned = [];
+  let skipped = 0;
+
+  for (const d of data) {
+    if (!d || typeof d !== "object") { skipped++; continue; }
+
+    const title = String(d.title || "").slice(0, MAX_TITLE);
+    const body = String(d.body || d.content || "").slice(0, MAX_BODY);
+    if (!title && !body) { skipped++; continue; }
+
+    const summary = String(d.summary || "").slice(0, MAX_SUMMARY);
+    const date = typeof d.date === "string" ? d.date.slice(0, 50) : "";
+    const savedAt = typeof d.savedAt === "string" ? d.savedAt : new Date().toISOString();
+
+    let keywords = [];
+    if (Array.isArray(d.keywords)) {
+      keywords = d.keywords
+        .filter(k => typeof k === "string")
+        .map(k => k.slice(0, MAX_KEYWORD_LEN))
+        .slice(0, MAX_KEYWORDS);
+    }
+
+    let url = "";
+    if (typeof d.url === "string" && d.url) {
+      try {
+        const u = new URL(d.url);
+        if (u.protocol === "http:" || u.protocol === "https:") url = u.href;
+      } catch { /* invalid url → 빈 값 */ }
+    }
+
+    cleaned.push({ title, date, body, summary, keywords, url, savedAt });
+  }
+
+  return { cleaned, skipped };
+}
+
 // 폴더 삭제 + 해당 폴더의 클립을 저장한 클립(folderId=null)으로 옮김. 한 트랜잭션으로 atomic 처리
 async function deleteFolder(id) {
   const db = await openDB();

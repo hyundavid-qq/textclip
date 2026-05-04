@@ -7,10 +7,15 @@ const $ = (sel) => document.querySelector(sel);
 
 async function init() {
   await renderList();
+  await renderDataStats();
 
   $("#btnAddPrompt").addEventListener("click", openFormForNew);
   $("#btnPromptCancel").addEventListener("click", closeForm);
   $("#btnPromptSave").addEventListener("click", handleSave);
+
+  $("#btnExportData").addEventListener("click", handleExportData);
+  $("#btnImportData").addEventListener("click", () => $("#dataFileInput").click());
+  $("#dataFileInput").addEventListener("change", handleImportData);
 }
 
 async function renderList() {
@@ -136,6 +141,85 @@ async function handleDelete(prompt) {
   }
   await renderList();
   showToast("✅ 프롬프트가 삭제되었습니다");
+}
+
+// ============================================================
+// 데이터 관리
+// ============================================================
+async function renderDataStats() {
+  const [clips, folders, stored] = await Promise.all([
+    getAllClips(),
+    getAllFolders(),
+    chrome.storage.local.get("lastExportDate"),
+  ]);
+  $("#statClips").textContent = clips.length.toLocaleString("ko-KR");
+  $("#statFolders").textContent = folders.length.toLocaleString("ko-KR");
+  $("#statLastBackup").textContent = stored.lastExportDate
+    ? formatRelativeTime(new Date(stored.lastExportDate))
+    : "아직 백업하지 않음";
+}
+
+function formatRelativeTime(date) {
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return "방금 전";
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay < 30) return `${diffDay}일 전`;
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+async function handleExportData() {
+  const clips = await getAllClips();
+  if (clips.length === 0) {
+    showToast("⚠️ 내보낼 클립이 없습니다");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(clips, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `textclip-${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  await chrome.storage.local.set({ lastExportDate: new Date().toISOString() });
+  await renderDataStats();
+  showToast("✅ 내보내기 완료");
+}
+
+async function handleImportData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const { cleaned, skipped } = parseClipsImport(text);
+
+    if (cleaned.length === 0) {
+      alert(skipped > 0
+        ? `❌ 가져올 수 있는 클립이 없습니다. (${skipped}개 모두 형식 불일치)`
+        : "가져올 클립이 없습니다.");
+      return;
+    }
+
+    const proceed = confirm(
+      `${cleaned.length}개의 클립을 추가합니다 (기존 클립은 유지). 계속할까요?\n\n⚠️ 중복 검사는 하지 않으니 같은 파일을 여러 번 가져오면 중복이 생깁니다.`
+    );
+    if (!proceed) return;
+
+    const added = await bulkAddClips(cleaned);
+    await renderDataStats();
+    let msg = `✅ ${added}개 클립을 가져왔습니다.`;
+    if (skipped > 0) msg += `\n(${skipped}개는 형식이 맞지 않아 스킵되었습니다.)`;
+    alert(msg);
+  } catch (err) {
+    alert(`❌ 가져오기 실패: ${err.message}`);
+  } finally {
+    e.target.value = "";
+  }
 }
 
 function showToast(message, duration = 4000) {

@@ -957,6 +957,7 @@ async function exportClips() {
   a.download = `textclip-${new Date().toISOString().split("T")[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  await chrome.storage.local.set({ lastExportDate: new Date().toISOString() });
 }
 
 async function importClips(e) {
@@ -964,42 +965,7 @@ async function importClips(e) {
   if (!file) return;
   try {
     const text = await file.text();
-    const data = JSON.parse(text);
-    if (!Array.isArray(data)) throw new Error("JSON이 배열 형식이 아닙니다");
-
-    const MAX_TITLE = 500;
-    const MAX_BODY = 100 * 1024;
-    const MAX_SUMMARY = 2000;
-    const MAX_KEYWORDS = 20;
-    const MAX_KEYWORD_LEN = 50;
-
-    const cleaned = [];
-    let skipped = 0;
-
-    for (const d of data) {
-      if (!d || typeof d !== "object") { skipped++; continue; }
-
-      const title = String(d.title || "").slice(0, MAX_TITLE);
-      const body = String(d.body || d.content || "").slice(0, MAX_BODY);
-      if (!title && !body) { skipped++; continue; }
-
-      const summary = String(d.summary || "").slice(0, MAX_SUMMARY);
-      const date = typeof d.date === "string" ? d.date.slice(0, 50) : "";
-      const savedAt = typeof d.savedAt === "string" ? d.savedAt : new Date().toISOString();
-
-      let keywords = [];
-      if (Array.isArray(d.keywords)) {
-        keywords = d.keywords
-          .filter(k => typeof k === "string")
-          .map(k => k.slice(0, MAX_KEYWORD_LEN))
-          .slice(0, MAX_KEYWORDS);
-      }
-
-      const sUrl = safeUrl(typeof d.url === "string" ? d.url : "");
-      const url = sUrl === "#" ? "" : sUrl;
-
-      cleaned.push({ title, date, body, summary, keywords, url, savedAt });
-    }
+    const { cleaned, skipped } = parseClipsImport(text);
 
     if (cleaned.length === 0) {
       alert(skipped > 0
@@ -1007,6 +973,11 @@ async function importClips(e) {
         : "가져올 클립이 없습니다.");
       return;
     }
+
+    const proceed = confirm(
+      `${cleaned.length}개의 클립을 추가합니다 (기존 클립은 유지). 계속할까요?\n\n⚠️ 중복 검사는 하지 않으니 같은 파일을 여러 번 가져오면 중복이 생깁니다.`
+    );
+    if (!proceed) return;
 
     const added = await bulkAddClips(cleaned);
     let msg = `✅ ${added}개 클립을 가져왔습니다.`;

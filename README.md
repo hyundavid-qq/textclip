@@ -65,14 +65,28 @@
 
 ---
 
-## 🔒 Privacy / 프라이버시
+## 🔒 Privacy & Sync
 
-- **No external network calls.** All clips and prompts stay in your local Chrome profile.
-  외부 통신 없음. 클립과 프롬프트 모두 본 Chrome 프로필 내에만.
-- **No API keys, no telemetry, no analytics.**
-  API 키 / 텔레메트리 / 애널리틱스 없음.
-- **Backup**: Library → 📤 Export to JSON. Restore on another device with 📥 Import.
-  백업: 보관함 → 📤 내보내기 (JSON). 다른 기기에서 📥 가져오기.
+### Privacy
+- **No external servers** — all data stays on your device
+- Stored in your Chrome profile (IndexedDB)
+- AI summary uses clipboard (you choose which AI to paste into)
+
+### No Auto-Sync Between Devices
+TextClip does NOT automatically sync between your devices.
+This is a deliberate choice for privacy.
+
+To use on multiple PCs:
+1. PC A: Library → 📤 Export (downloads JSON)
+2. Move JSON to PC B (USB / cloud / email)
+3. PC B: Library → 📥 Import (adds to existing clips)
+
+**💡 Tip:** Save the export to a cloud folder (Dropbox / iCloud / Google Drive)
+and you can import it on any PC easily.
+
+### Data Loss Warning
+- If you delete your Chrome profile or change PC, your data is gone.
+- Export regularly (weekly recommended).
 
 ---
 
