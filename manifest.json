@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TextClip",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Clip text from any webpage with right-click. Organize into folders. Summarize with your AI — all stored locally.",
   "permissions": [
     "contextMenus",

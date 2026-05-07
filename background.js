@@ -2,15 +2,17 @@
 importScripts('db.js', 'lite-analyzer.js');
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "save-news-clip",
-    title: "TextClip에 저장",
-    contexts: ["selection"],
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "save-textclip",
+      title: "TextClip에 저장",
+      contexts: ["selection"],
+    });
   });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== "save-news-clip" || !info.selectionText) return;
+  if (info.menuItemId !== "save-textclip" || !info.selectionText) return;
 
   try {
     const selectedText = info.selectionText.trim();
