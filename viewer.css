@@ -1044,6 +1044,32 @@ button.ghost:hover {
 .modal-close:hover { background: #f3f0e9; color: #333; }
 .modal-content h2 { margin-top: 0; font-size: 18px; }
 .modal-hint { color: var(--text-muted); font-size: 13px; }
+.modal-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f3eefe;
+  border-left: 3px solid #6b46c1;
+  padding: 12px 14px;
+  border-radius: 0 6px 6px 0;
+  margin: 14px 0 18px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.modal-info-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.modal-info-content {
+  color: #4a3870;
+}
+.modal-info-content strong {
+  display: block;
+  color: #5b3a9e;
+  margin-bottom: 3px;
+  font-weight: 600;
+}
 .modal-content textarea {
   width: 100%; box-sizing: border-box;
   padding: 12px; border: 1px solid var(--border-strong);

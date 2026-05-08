@@ -1212,7 +1212,7 @@ async function handleAISummarize(clip) {
     const body = clip.body || clip.content || "";
     const textToCopy = prompt.content + body;
     await navigator.clipboard.writeText(textToCopy);
-    showToast("✅ 복사 완료! 사용하시는 AI(Gemini, GPT, Claude 등)에 붙여넣으세요");
+    showToast("✅ 복사 완료! 사용하시는 AI(Gemini, GPT, Claude 등)에 붙여넣으세요", 7000);
     // 잠깐 후 결과 입력 모달 자동 표시 (사용자가 AI에 붙여넣고 응답받아올 시간)
     setTimeout(() => openAIResultModal(clip), 800);
   } catch (e) {
